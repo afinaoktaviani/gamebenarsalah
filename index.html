@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GAME KAMERA BENAR ATAU SALAH</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b1224;overflow:hidden;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:#0f172a}
+#stage{position:fixed;inset:0;margin:auto;width:min(100vw,calc(100vh*16/9));height:min(100vh,calc(100vw*9/16));container-type:size;overflow:hidden;background:linear-gradient(135deg,#dbeafe 0%,#fef9c3 55%,#dcfce7 100%)}
+.hidden{display:none!important}
+
+/* Topbar */
+#topbar{position:absolute;top:0;left:0;right:0;height:9cqh;min-height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 2cqw;z-index:20}
+
+.btn{font:inherit;font-weight:700;border:0;border-radius:14px;padding:1.1cqh 1.8cqw;font-size:clamp(14px,2.6cqh,22px);cursor:pointer;display:inline-flex;align-items:center;gap:.5em;box-shadow:0 4px 0 rgba(0,0,0,.25);transition:transform .08s;white-space:nowrap;line-height:1.2}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn svg{width:1.1em;height:1.1em;flex:none}
+.btn-dark{background:#1e3a8a;color:#fff}
+.btn-blue{background:#2563eb;color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-yellow{background:#facc15;color:#000}
+.btn-light{background:#fff;color:#0f172a;border:3px solid #0f172a}
+.btn-sm{font-size:clamp(12px,2.2cqh,17px);padding:.6cqh 1cqw;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+
+/* Views */
+.view{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:10cqh 3cqw 6cqh;overflow:hidden}
+.view.active{display:flex}
+
+/* Home */
+#home{justify-content:center;gap:2.6cqh}
+.brand{display:flex;align-items:center;gap:2cqw}
+.logo{height:24cqh;width:auto;flex:none;filter:drop-shadow(0 4px 0 rgba(0,0,0,.2))}
+h1{margin:0;font-size:clamp(24px,8cqh,72px);font-weight:900;text-align:center;color:#1e3a8a;text-shadow:0 3px 0 #fde047;line-height:1.1}
+.info{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5cqw;width:min(92%,120cqh)}
+.card{background:#fff;border:3px solid #0f172a;border-radius:18px;padding:2cqh 1.5cqw;text-align:center;font-weight:800;font-size:clamp(14px,3.4cqh,26px)}
+.card small{display:block;font-weight:600;font-size:.7em;color:#475569;margin-bottom:.4cqh}
+.petunjuk{width:min(92%,120cqh);margin:0;background:#fff7ed;border:2px dashed #ea580c;border-radius:14px;padding:1.4cqh 1.5cqw;font-size:clamp(13px,2.6cqh,20px);font-weight:600;color:#7c2d12;text-align:center;line-height:1.4}
+.btns{display:flex;flex-wrap:wrap;gap:1.5cqw;justify-content:center}
+.warn{color:#b91c1c;font-weight:700;font-size:clamp(13px,2.6cqh,20px);text-align:center;margin:0}
+#previewBox{position:relative;width:min(70cqw,calc(60cqh*2.5));aspect-ratio:15/6;border:4px solid #000;border-radius:14px;overflow:hidden;background:#1e293b}
+.vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:0}
+
+/* Game */
+#game{justify-content:flex-start;gap:1.6cqh}
+.qpanel{width:100%;background:#fff;border:3px solid #0f172a;border-radius:18px;padding:1.4cqh 2cqw;box-shadow:0 6px 0 rgba(0,0,0,.2)}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:1cqw}
+.chip{background:#1e3a8a;color:#fff;border-radius:999px;padding:.5cqh 1.4cqw;font-weight:800;font-size:clamp(13px,2.6cqh,20px)}
+.timer{background:#facc15;border:3px solid #000;border-radius:14px;padding:.4cqh 1.2cqw;font-weight:900;font-size:clamp(18px,4.4cqh,38px);min-width:9cqw;text-align:center}
+.timer.warn{background:#dc2626;color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.qtext{margin:1cqh 0;font-weight:700;font-size:clamp(14px,3cqh,26px);line-height:1.35;white-space:pre-line;max-height:21cqh;overflow:auto}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:1.2cqw;font-size:clamp(13px,2.5cqh,22px);font-weight:600}
+.opts div{background:#f1f5f9;border-radius:12px;padding:.7cqh 1cqw}
+.scorerow{display:flex;justify-content:space-between;align-items:center;gap:2cqw;margin-top:1cqh;flex-wrap:wrap}
+.sc{display:flex;align-items:center;gap:1cqw;font-weight:800;font-size:clamp(14px,2.8cqh,22px)}
+.sc b{font-size:1.5em;color:#1e3a8a;min-width:1.6em;text-align:center}
+
+.cam{position:relative;width:min(100%,calc((100cqh - 52cqh)*2.5));aspect-ratio:15/6;margin:0 auto;border:4px solid #000;border-radius:16px;overflow:hidden;background:#1e293b}
+.cam::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:4px;margin-left:-2px;background:#000;z-index:3}
+.half{position:absolute;top:0;bottom:0;width:50%;z-index:2;transition:background .3s}
+.hl{left:0}
+.hr{right:0}
+.half.ok{background:rgba(34,197,94,.55)}
+.half.bad{background:rgba(239,68,68,.55)}
+.lbl{position:absolute;bottom:2.5cqh;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:.2cqh 1cqw;font-weight:800;font-size:clamp(14px,3.2cqh,26px)}
+.hl .lbl{left:1.5cqw}
+.hr .lbl{right:1.5cqw}
+.camoff{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-weight:700;z-index:1;text-align:center;padding:2cqh 4cqw;font-size:clamp(14px,3cqh,24px);margin:0}
+.badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;background:#facc15;color:#000;border:4px solid #000;border-radius:16px;padding:1.4cqh 3cqw;font-weight:900;font-size:clamp(20px,7cqh,64px);box-shadow:0 6px 0 rgba(0,0,0,.4);display:none;white-space:nowrap}
+.badge.show{display:block;animation:pop .35s ease-out}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(.3)}100%{transform:translate(-50%,-50%) scale(1)}}
+
+/* Result */
+#result{justify-content:center}
+.resCard{background:#fff;border:3px solid #0f172a;border-radius:22px;padding:4cqh 4cqw;text-align:center;display:flex;flex-direction:column;gap:2.4cqh;align-items:center;width:min(90%,110cqh)}
+.resCard h2{margin:0;font-size:clamp(24px,7cqh,56px);color:#1e3a8a;font-weight:900}
+.resCard p{margin:0;font-size:clamp(18px,5cqh,40px);font-weight:800}
+.scores{display:flex;gap:2cqw;flex-wrap:wrap;justify-content:center}
+.scores .card{min-width:22cqw}
+
+/* Footer credit */
+#credit{position:absolute;bottom:1cqh;left:0;right:0;text-align:center;font-weight:700;font-size:clamp(12px,2.2cqh,18px);color:#1e3a8a;z-index:10;pointer-events:none}
+
+/* Modal */
+.modal{position:absolute;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:3cqh 3cqw}
+.sheet{background:#fff;border:3px solid #0f172a;border-radius:20px;width:100%;height:100%;max-width:1100px;display:flex;flex-direction:column;overflow:hidden}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:1.8cqh 2cqw;background:#1e3a8a;color:#fff}
+.sheet-head h2{margin:0;font-size:clamp(16px,4cqh,28px)}
+.tabs{display:flex;gap:1cqw;padding:1.5cqh 2cqw 0;flex-wrap:wrap}
+.tab{font:inherit;font-weight:700;font-size:clamp(13px,2.6cqh,18px);border:2px solid #0f172a;background:#fff;border-radius:12px;padding:.8cqh 1.6cqw;cursor:pointer}
+.tab.on{background:#facc15}
+.sheet-body{flex:1;overflow:auto;padding:1.5cqh 2cqw 3cqh}
+.sheet label{display:block;font-weight:700;margin-top:1.2cqh;font-size:clamp(13px,2.6cqh,18px)}
+.sheet input,.sheet select,.sheet textarea{width:100%;font:inherit;font-size:clamp(13px,2.6cqh,18px);padding:.8cqh 1cqw;border:2px solid #334155;border-radius:10px;margin-top:.4cqh;background:#fff;color:#0f172a}
+.sheet input[type=checkbox]{width:auto;margin-right:.5cqw}
+.sheet textarea{min-height:12cqh;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.4cqw}
+.toolbar{display:flex;gap:1cqw;flex-wrap:wrap;align-items:center;margin:1cqh 0 1.5cqh}
+.formbox{background:#eff6ff;border:2px solid #2563eb;border-radius:16px;padding:1.5cqh 1.5cqw;margin-bottom:2cqh}
+.formbox h3{margin:0 0 .5cqh;font-size:clamp(15px,3.2cqh,22px)}
+.frow{display:flex;gap:1cqw;justify-content:flex-end;margin-top:1.5cqh;flex-wrap:wrap}
+.row{display:flex;align-items:center;gap:1cqw;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:1cqh 1cqw;margin-bottom:1cqh}
+.row .chk{width:auto;margin:0}
+.rtxt{flex:1;font-size:clamp(12px,2.4cqh,17px);line-height:1.35}
+.meta{color:#475569;font-size:.85em;margin-top:.3cqh}
+.msg{font-weight:700;color:#15803d;font-size:clamp(13px,2.6cqh,18px);min-height:1.4em;margin-top:1cqh}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <header id="topbar">
+    <div id="leftSlot">
+      <button class="btn btn-red hidden" id="btnStop">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        <span>Hentikan Game</span>
+      </button>
+    </div>
+    <button class="btn btn-dark" id="btnFS"></button>
+  </header>
+
+  <!-- HALAMAN BERANDA -->
+  <section id="home" class="view active">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 200 230" role="img" aria-label="Logo SMP Negeri 1 Cipeucang">
+        <path d="M12 22 Q100 2 188 22 L188 130 Q186 196 100 222 Q14 196 12 130 Z" fill="#0a8ad8" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+        <text x="100" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="24" fill="#fff">SMP NEGERI 1</text>
+        <ellipse cx="100" cy="98" rx="40" ry="28" fill="#4caf50" stroke="#111" stroke-width="2"/>
+        <path d="M100 70 L106 98 L100 126 L94 98 Z" fill="#e11d2e"/>
+        <path d="M60 118 Q80 112 96 124 L96 150 Q74 140 60 150 Z M140 118 Q120 112 104 124 L104 150 Q126 140 140 150 Z" fill="#facc15" stroke="#111" stroke-width="2"/>
+        <path d="M72 148 L100 140 L128 148 L128 168 L100 160 L72 168 Z" fill="#fff" stroke="#111" stroke-width="2"/>
+        <path d="M24 172 L176 172 L164 198 Q100 186 36 198 Z" fill="#fff" stroke="#111" stroke-width="2"/>
+        <text x="100" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="13" fill="#111">CIPEUCANG</text>
+      </svg>
+      <h1>GAME KAMERA BENAR ATAU SALAH</h1>
+    </div>
+
+    <div class="info">
+      <div class="card" id="infoSoal">Jumlah Soal : 10 Soal</div>
+      <div class="card" id="infoWaktu">Waktu Soal : 10 Detik per soal</div>
+      <div class="card"><small>Jenjang &amp; Mata Pelajaran</small><span id="infoJenjang">SMP / Kelas 8 • IPA</span></div>
+    </div>
+
+    <p class="petunjuk" id="petunjukTxt"></p>
+
+    <div class="btns">
+      <button class="btn btn-green" id="btnMulai">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span>Mulai Game</span>
+      </button>
+      <button class="btn btn-blue" id="btnKamera">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        <span>Aktifkan / Uji Kamera</span>
+      </button>
+      <button class="btn btn-yellow" id="btnGuru">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Pengaturan Guru</span>
+      </button>
+    </div>
+
+    <p class="warn hidden" id="warnSoal">Bank soal kosong atau belum ada soal aktif. Aktifkan minimal 1 soal di Pengaturan Guru.</p>
+    <div id="previewBox" class="hidden"><video class="vid" id="vidHome" autoplay playsinline muted></video></div>
+    <p class="warn" id="camStatus"></p>
+  </section>
+
+  <!-- HALAMAN GAME -->
+  <section id="game" class="view">
+    <div class="qpanel">
+      <div class="qtop">
+        <span class="chip" id="qNo">Soal 1 / 10</span>
+        <span class="timer" id="timerBox"><span id="tLeft">10</span> dtk</span>
+      </div>
+      <p class="qtext" id="qText"></p>
+      <div class="opts">
+        <div id="optA"></div>
+        <div id="optB"></div>
+      </div>
+      <div class="scorerow">
+        <div class="sc"><span id="lblG1">Kelompok 1</span> <b id="sc1">0</b> <button class="btn btn-green btn-sm" id="addG1">+1</button></div>
+        <div class="sc"><span id="lblG2">Kelompok 2</span> <b id="sc2">0</b> <button class="btn btn-green btn-sm" id="addG2">+1</button></div>
+      </div>
+    </div>
+
+    <div class="cam" id="cam">
+      <video class="vid" id="vidGame" autoplay playsinline muted></video>
+      <p class="camoff" id="camOff">Kamera tidak aktif. Permainan tetap berjalan.</p>
+      <div class="half hl" id="halfA"><span class="lbl">A.</span></div>
+      <div class="half hr" id="halfB"><span class="lbl">B.</span></div>
+      <div class="badge" id="badge"></div>
+    </div>
+  </section>
+
+  <!-- HALAMAN HASIL -->
+  <section id="result" class="view">
+    <div class="resCard">
+      <h2>Permainan Selesai!</h2>
+      <p id="resWin"></p>
+      <div class="scores">
+        <div class="card" id="resG1"></div>
+        <div class="card" id="resG2"></div>
+      </div>
+      <div class="btns">
+        <button class="btn btn-green" id="btnUlang">Main Lagi</button>
+        <button class="btn btn-blue" id="btnBeranda">Kembali ke Beranda</button>
+      </div>
+    </div>
+  </section>
+
+  <footer id="credit">Dibuat oleh: Afina Mifta Oktaviani, S.Pdi</footer>
+
+  <!-- MODAL PENGATURAN GURU -->
+  <div class="modal hidden" id="modal">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2>Pengaturan Guru</h2>
+        <button class="btn btn-light btn-sm" id="btnClose">✕ Tutup</button>
+      </div>
+      <div class="tabs">
+        <button class="tab on" id="tabCfg">Konfigurasi Pembelajaran</button>
+        <button class="tab" id="tabBank">Bank Soal</button>
+      </div>
+
+      <div class="sheet-body" id="pCfg">
+        <div class="grid2">
+          <div><label for="cJenjang">Jenjang Pendidikan &amp; Kelas</label><input id="cJenjang" placeholder="Contoh: SMP / Kelas 8"></div>
+          <div><label for="cMapel">Mata Pelajaran</label><input id="cMapel" placeholder="Contoh: IPA"></div>
+          <div><label for="cG1">Nama Kelompok 1 (sisi kiri / A)</label><input id="cG1"></div>
+          <div><label for="cG2">Nama Kelompok 2 (sisi kanan / B)</label><input id="cG2"></div>
+        </div>
+        <label for="cWaktu">Waktu Per Soal (Detik)</label>
+        <input id="cWaktu" type="number" min="3" max="120">
+        <label for="cPetunjuk">Petunjuk / Aturan Tambahan</label>
+        <textarea id="cPetunjuk"></textarea>
+        <div class="frow"><button class="btn btn-green" id="btnSaveCfg">Simpan Konfigurasi</button></div>
+        <p class="msg" id="cfgMsg"></p>
+      </div>
+
+      <div class="sheet-body hidden" id="pBank">
+        <div class="toolbar">
+          <button class="btn btn-green btn-sm" id="btnTambah">+ Tambah Soal</button>
+          <button class="btn btn-yellow btn-sm" id="btnReset">Pulihkan Bank Soal Awal (35 soal)</button>
+          <span id="bankCount" style="font-weight:700"></span>
+        </div>
+        <div class="formbox hidden" id="formBox">
+          <h3 id="formTitle">Tambah Soal Baru</h3>
+          <input type="hidden" id="fId">
+          <div class="grid2">
+            <div><label for="fJenis">Jenis Soal</label>
+              <select id="fJenis"><option>Pilihan A-B</option><option>Benar-Salah</option></select></div>
+            <div><label for="fLvl">Tingkat Kesulitan</label>
+              <select id="fLvl"><option>Mudah</option><option selected>Sedang</option><option>Sulit</option></select></div>
+          </div>
+          <label for="fPer">Pertanyaan / Statement</label>
+          <textarea id="fPer"></textarea>
+          <div class="grid2">
+            <div><label for="fA">Pilihan A (Benar jika Benar-Salah)</label><input id="fA"></div>
+            <div><label for="fB">Pilihan B (Salah jika Benar-Salah)</label><input id="fB"></div>
+          </div>
+          <div class="grid2">
+            <div><label for="fKunci">Kunci Jawaban</label>
+              <select id="fKunci"><option>A</option><option>B</option></select></div>
+            <div style="display:flex;align-items:flex-end"><label style="margin:0"><input type="checkbox" id="fAktif" checked> Aktif (dipakai di game)</label></div>
+          </div>
+          <label for="fPem">Pembahasan</label>
+          <textarea id="fPem"></textarea>
+          <div class="frow">
+            <button class="btn btn-light btn-sm" id="btnBatal">Batal</button>
+            <button class="btn btn-blue btn-sm" id="btnSimpanSoal">Simpan Soal</button>
+          </div>
+        </div>
+        <div id="bankList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Utilitas ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KC='gkbs_cfg_v1', KB='gkbs_bank_v1';
+const DEF_CFG={jenjang:'SMP / Kelas 8',mapel:'IPA',petunjuk:'Setiap kelompok berdiri di sisi kamera sesuai jawabannya (A di kiri, B di kanan). Guru menekan +1 pada kelompok yang berada di sisi jawaban yang benar sebelum waktu habis.',waktu:10,g1:'Kelompok 1',g2:'Kelompok 2'};
+
+/* ---------- Bank soal awal (dari PDF Soal Review IPA Kelas 8 Semester 1) ---------- */
+/* [pertanyaan, pilihan A, pilihan B, kunci, pembahasan, tingkat kesulitan] */
+const RAW=[
+["Perhatikan beberapa peristiwa astronomi berikut!\n(1) Matahari tampak terbit di timur dan terbenam di barat setiap hari.\n(2) Pengamatan teleskop menunjukkan Venus memiliki fase seperti Bulan.\n(3) Ditemukannya empat bulan besar (satelit) yang mengorbit Jupiter.\n(4) Bintang-bintang tampak berputar mengelilingi Bumi pada malam hari.\nFakta yang mendukung kebenaran teori heliosentris ditunjukkan oleh nomor ....","1 dan 2","2 dan 3","B","Fase Venus dan satelit Jupiter menunjukkan tidak semua benda langit mengorbit Bumi, sehingga mendukung heliosentris.","Sedang"],
+["Planet-planet dalam tata surya tetap bergerak pada lintasan orbitnya dan tidak terlempar ke ruang angkasa karena adanya ....","gaya gravitasi Matahari dan planet yang diimbangi gerak revolusi","gaya sentrifugal Matahari yang mendorong planet menjauh secara konstan","A","Gravitasi Matahari menarik planet, dan gerak revolusi planet mengimbanginya sehingga planet tetap pada orbitnya.","Mudah"],
+["Cermati ciri-ciri benda langit berikut: (1) Tersusun atas debu dan es membeku; (2) Orbit sangat lonjong (eksentris); (3) Saat mendekati Matahari membentuk kepala dan ekor yang menjauhi Matahari. Benda langit yang dimaksud adalah ....","asteroid","komet","B","Komet tersusun dari debu dan es, orbitnya lonjong, dan ekornya selalu menjauhi Matahari.","Mudah"],
+["Perhatikan urutan planet dalam tata surya: Matahari – [1] – [2] – Bumi – [3] – [4] – Saturnus – Uranus – Neptunus. Kelompok planet inferior (orbitnya di antara Matahari dan Bumi) ditunjukkan oleh nomor ....","[1] dan [2]","[3] dan [4]","A","Planet inferior adalah planet yang orbitnya lebih dekat ke Matahari daripada Bumi, yaitu Merkurius dan Venus.","Sedang"],
+["Seorang pelaut mengamati kapal yang datang dari tengah laut menuju pelabuhan. Bagian kapal yang pertama kali terlihat adalah ujung tiang layarnya, barulah badan kapal secara keseluruhan. Peristiwa ini membuktikan bahwa ....","bentuk permukaan Bumi melengkung atau bulat","daya jangkau mata manusia terbatas pada jarak pandang horizontal","A","Permukaan laut yang melengkung membuat bagian badan kapal tertutup lengkung Bumi, sehingga bagian tinggi terlihat lebih dulu.","Mudah"],
+["Bumi berotasi pada porosnya sekitar 24 jam. Apabila kecepatan rotasi Bumi melambat drastis hingga membutuhkan waktu 1 bulan untuk satu kali putaran, dampak yang paling mengancam kelangsungan hidup manusia adalah ....","gaya gravitasi Bumi akan menghilang sehingga manusia melayang","perbedaan suhu ekstrem antara sisi siang yang sangat panas dan malam yang membeku","B","Rotasi yang sangat lambat membuat sisi siang sangat panas dan sisi malam sangat dingin dalam waktu lama.","Sedang"],
+["Pada bulan Juni posisi Matahari tampak di belahan langit utara, sedangkan pada bulan Desember tampak di belahan langit selatan. Perubahan posisi semu tahunan Matahari ini disebabkan oleh ....","gerak rotasi Bumi dari arah barat ke timur","kemiringan sumbu rotasi Bumi 23,5° saat berevolusi mengelilingi Matahari","B","Kemiringan sumbu Bumi saat revolusi membuat posisi semu Matahari berpindah antara belahan utara dan selatan.","Sedang"],
+["Perhatikan peristiwa alam: (1) Terjadinya siang dan malam; (2) Gerak semu harian Matahari; (3) Perubahan lama waktu siang dan malam; (4) Pergantian musim di belahan Bumi utara dan selatan. Akibat dari gerak revolusi Bumi ditunjukkan oleh nomor ....","1 dan 2","3 dan 4","B","Perubahan lama siang-malam dan pergantian musim disebabkan revolusi, sedangkan siang-malam dan gerak harian berasal dari rotasi.","Sedang"],
+["Perhatikan skema gerhana: Matahari — Bumi — Bulan. Apabila terjadi gerhana bulan sebagian, posisi Bulan berada pada ....","tepat di tengah-tengah daerah umbra (bayangan inti) Bumi","sebagian masuk ke daerah umbra dan sebagian lagi di penumbra Bumi","B","Pada gerhana bulan sebagian, Bulan hanya sebagian masuk umbra dan sebagian lainnya berada di penumbra.","Sedang"],
+["Pada tanggal 21 Juni, belahan Bumi utara condong ke arah Matahari, sedangkan belahan Bumi selatan menjauhi Matahari. Musim yang sedang berlangsung di Jepang (belahan utara) dan Australia (belahan selatan) berturut-turut adalah ....","musim panas dan dingin","musim dingin dan panas","A","Pada 21 Juni belahan utara mengalami musim panas, sedangkan belahan selatan mengalami musim dingin.","Sedang"],
+["Kemiringan sumbu Bumi 23,5° membuat posisi relatif belahan Bumi terhadap Matahari selalu berubah sepanjang tahun. Hubungan yang tepat antara posisi Bumi dan perubahan musim adalah ....","belahan Bumi yang condong ke Matahari menerima sinar lebih lama sehingga mengalami musim panas","saat Bumi di titik terjauh dari Matahari (aphelion), seluruh dunia mengalami musim dingin","A","Belahan yang condong ke Matahari menerima sinar lebih lama dan lebih tegak sehingga mengalami musim panas.","Sulit"],
+["Pada bulan Desember, wilayah Eropa mengalami suhu dingin bersalju, sementara Australia mengalami cuaca panas terik. Penyebab utama perbedaan penerimaan energi Matahari di kedua wilayah tersebut adalah ....","jarak Australia ke Matahari jauh lebih dekat dibandingkan Eropa","sudut datang sinar Matahari di Eropa lebih miring, sedangkan di Australia lebih tegak lurus","B","Sinar Matahari di Australia datang lebih tegak lurus sehingga energinya terkonsentrasi, sedangkan di Eropa lebih miring.","Sedang"],
+["Seorang siswa di London (51° LU) mencatat pada bulan Juli Matahari terbit pukul 04.50 dan terbenam pukul 21.15. Berdasarkan konsep revolusi Bumi, fenomena lama siang lebih panjang daripada malam terjadi karena ....","kecepatan rotasi Bumi melambat khusus pada bulan Juli","belahan Bumi utara condong ke Matahari sehingga lingkaran penerangan mencakup lebih banyak wilayah utara","B","Pada bulan Juli belahan utara condong ke Matahari sehingga siang lebih panjang daripada malam di wilayah utara.","Sulit"],
+["Perhatikan pernyataan mengenai sel: (1) Sel merupakan unit struktural dan fungsional terkecil makhluk hidup; (2) Semua makhluk hidup tersusun atas satu sel atau banyak sel; (3) Sel baru dapat terbentuk secara spontan dari benda mati di sekitarnya; (4) Setiap sel berasal dari pembelahan sel sebelumnya. Pernyataan yang tidak sesuai dengan teori sel adalah nomor ....","2","3","B","Teori sel menyatakan setiap sel berasal dari sel sebelumnya; pernyataan (3) tentang pembentukan spontan tidak sesuai.","Sedang"],
+["Perhatikan ciri bagian sel tumbuhan: [1] Lapisan terluar kaku pemberi bentuk tetap; [2] Organel hijau tempat fotosintesis; [3] Rongga besar penyimpan cadangan makanan/air; [4] Pusat pengendali aktivitas sel. Nama bagian sel label 1, 2, 3, dan 4 berturut-turut adalah ....","membran sel, mitokondria, lisosom, inti sel","dinding sel, kloroplas, vakuola, inti sel","B","Dinding sel memberi bentuk tetap, kloroplas tempat fotosintesis, vakuola menyimpan cadangan, dan inti sel mengatur aktivitas sel.","Mudah"],
+["Perhatikan pernyataan struktur sel: (1) Memiliki dinding sel selulosa; (2) Memiliki sentriol untuk pembelahan sel; (3) Memiliki kloroplas; (4) Memiliki vakuola kecil dan banyak. Ciri khas yang hanya dimiliki oleh sel hewan ditunjukkan oleh nomor ....","1 dan 3","2 dan 4","B","Sentriol dan vakuola kecil banyak hanya dimiliki sel hewan, sedangkan dinding selulosa dan kloroplas khas sel tumbuhan.","Sedang"],
+["Dalam sistem gerak manusia, penyusunan tingkat organisasi kehidupan dari unit terkecil hingga membentuk sistem organ yang benar adalah ....","osteosit (sel tulang) → jaringan tulang → tulang paha (organ) → sistem rangka","jaringan tulang → osteosit (sel tulang) → sistem rangka → tulang paha (organ)","A","Urutan organisasi kehidupan adalah sel, jaringan, organ, lalu sistem organ.","Sedang"],
+["Perhatikan tabel tingkat organisasi kehidupan dan contohnya: 1) Sel – Neuron (sel saraf); 2) Jaringan – Lambung dan usus halus; 3) Organ – Jantung dan paru-paru; 4) Sistem Organ – Epitel pipih selapis. Pasangan tingkat organisasi kehidupan dengan contoh yang tepat adalah nomor ....","1 dan 3","2 dan 4","A","Neuron adalah sel dan jantung adalah organ, sehingga pasangan 1 dan 3 tepat.","Sedang"],
+["Perhatikan urutan saluran pencernaan: Mulut (1) → Kerongkongan (2) → Lambung (3) → Usus Halus (4) → Usus Besar (5). Organ yang memiliki dinding berlipat (vili) dan berfungsi menyerap sebagian besar sari nutrisi makanan adalah nomor ....","3","4","B","Usus halus memiliki vili yang memperluas permukaan untuk menyerap sari makanan.","Mudah"],
+["Pada ujung saluran pernapasan di dalam paru-paru terdapat gelembung-gelembung kecil berdinding sangat tipis dan dikelilingi kapiler darah (bagian X). Fungsi utama bagian X tersebut adalah ....","menyaring debu dan kotoran yang masuk bersama udara pernapasan","tempat terjadinya pertukaran gas oksigen dan karbon dioksida secara difusi","B","Alveolus berdinding tipis dan dikelilingi kapiler sehingga oksigen dan karbon dioksida berdifusi di sana.","Mudah"],
+["Ketika tubuh dehidrasi, darah menjadi lebih pekat. Kondisi ini dideteksi oleh pusat pengaturan di otak yang merangsang rasa haus dan memerintahkan ginjal menyerap kembali lebih banyak air sehingga urine sedikit. Bagian otak yang mengatur keseimbangan air tubuh tersebut adalah ....","serebelum (otak kecil)","hipotalamus","B","Hipotalamus mengatur rasa haus dan keseimbangan cairan tubuh.","Sedang"],
+["Cermati karakteristik pembuluh darah: (1) Dinding tebal, kuat, elastis; (2) Letak tersembunyi di dalam tubuh; (3) Aliran darah dari jantung ke seluruh tubuh; (4) Jika terluka darah memancar. Jenis pembuluh darah tersebut adalah ....","vena (pembuluh balik)","arteri (pembuluh nadi)","B","Arteri berdinding tebal dan elastis, dan membawa darah dari jantung ke seluruh tubuh.","Mudah"],
+["Perhatikan organ reproduksi perempuan: [1] Ovarium • [2] Tuba Falopi • [3] Uterus • [4] Vagina. Bagian yang berfungsi menghasilkan sel telur (ovum) serta hormon estrogen dan progesteron ditunjukkan oleh nomor ....","1","2","A","Ovarium menghasilkan ovum serta hormon estrogen dan progesteron.","Mudah"],
+["Penyakit TBC dan influenza mudah menular melalui percikan dahak atau udara. Upaya paling tepat untuk mencegah penularan penyakit pada sistem pernapasan tersebut adalah ....","menerapkan etika batuk, memakai masker di tempat ramai, dan menjaga ventilasi","mengonsumsi antibiotik secara rutin meskipun tubuh dalam keadaan sehat","A","Etika batuk, masker, dan ventilasi memutus rantai penularan melalui udara; antibiotik tidak mencegah penyakit ini.","Mudah"],
+["Andi sering melewatkan sarapan, gemar makanan sangat pedas/asam, dan terlambat makan siang sehingga sering nyeri ulu hati dan mual. Upaya tepat untuk mengatasi sekaligus mencegah gangguan pencernaan Andi adalah ....","memperbanyak minum minuman bersoda untuk menetralkan asam lambung","membiasakan pola makan teratur porsi kecil dan mengurangi makanan pedas/asam","B","Makan teratur dengan porsi kecil dan mengurangi makanan pedas/asam membantu mencegah gangguan lambung.","Sedang"],
+["Ginjal bekerja terus-menerus menyaring zat sisa metabolisme dari darah. Kebiasaan sehari-hari yang paling tepat untuk menjaga kesehatan organ ginjal adalah ....","menahan buang air kecil saat sedang sibuk bekerja","minum air putih yang cukup setiap hari dan membatasi konsumsi garam berlebih","B","Air yang cukup membantu ginjal membuang zat sisa, sedangkan menahan BAK dan garam berlebih membebani ginjal.","Mudah"],
+["Perhatikan tabel nama penyakit dan upaya pencegahannya: 1) Anemia – konsumsi makanan kaya zat besi (bayam, daging); 2) Konstipasi – kurangi minum air putih & perbanyak lemak; 3) Batu Ginjal – membiasakan menahan buang air kecil; 4) Hipertensi – kurangi konsumsi garam dan rutin berolahraga. Pasangan yang tepat antara nama penyakit dan upaya pencegahannya adalah nomor ....","1 dan 4","2 dan 3","A","Zat besi mencegah anemia dan mengurangi garam serta berolahraga mencegah hipertensi; pasangan 2 dan 3 keliru.","Sedang"],
+["Penyalahgunaan zat adiktif golongan halusinogen (seperti LSD atau jamur psilocybin) sangat berbahaya bagi sistem saraf pusat. Pengaruh utama zat golongan ini terhadap persepsi pancaindra manusia adalah ....","menekan kerja sistem saraf sehingga pengguna merasa sangat mengantuk dan tenang","menyebabkan pengguna melihat, mendengar, atau merasakan sesuatu yang tidak nyata","B","Halusinogen memengaruhi otak sehingga pengguna melihat, mendengar, atau merasakan hal yang tidak nyata.","Sedang"],
+["Produk minuman kemasan menggunakan pemanis buatan (siklamat/aspartam) dan pewarna sintetis kadar tinggi. Perbandingan dampak kesehatan jangka pendek dan jangka panjang jika dikonsumsi berlebihan adalah ....","jangka pendek gagal ginjal, jangka panjang radang tenggorokan","jangka pendek iritasi tenggorokan/mual, jangka panjang risiko kerusakan hati, ginjal, dan kanker","B","Konsumsi berlebih menimbulkan iritasi jangka pendek dan risiko kerusakan organ jangka panjang.","Sulit"],
+["Penyalahgunaan alkohol dan narkotika jangka panjang menimbulkan kerusakan fisiologis serius. Dampak fisiologis yang paling sering terjadi pada organ hati (liver) akibat konsumsi alkohol berlebih dalam waktu lama adalah ....","pembesaran alveolus paru-paru sehingga pertukaran oksigen terganggu","pengerasan dan kerusakan jaringan hati (sirosis hati) sehingga gagal menyaring racun","B","Alkohol berlebih dalam waktu lama merusak hati hingga menjadi sirosis, sehingga fungsi penyaringan racun terganggu.","Sedang"],
+["Remaja yang terjerumus penyalahgunaan zat adiktif sering menunjukkan perubahan perilaku drastis. Dampak sosial yang paling umum terjadi pada remaja tersebut di lingkungan keluarga dan sekolah adalah ....","meningkatnya rasa percaya diri saat berdiskusi di depan kelas","menarik diri dari pergaulan sehat, sering membolos, dan mudah berbohong","B","Remaja yang menyalahgunakan zat adiktif biasanya menarik diri dari pergaulan sehat dan sering membolos.","Sedang"],
+["Maraknya peredaran narkoba di kalangan remaja tidak hanya merugikan pengguna, tetapi juga berdampak buruk bagi masyarakat. Dampak lingkungan dan sosial yang timbul akibat tingginya angka penyalahgunaan zat adiktif di suatu wilayah adalah ....","meningkatnya angka kriminalitas seperti pencurian untuk membeli zat adiktif","meningkatnya rasa solidaritas antarwarga dalam menjaga keamanan lingkungan","A","Penyalahgunaan zat adiktif mendorong tindak kriminal, seperti pencurian untuk membeli narkoba.","Sulit"],
+["Pada komposisi camilan kemasan tertera: tepung terigu, minyak nabati, gula, garam, MSG, tartrazin CI 19140, natrium benzoat. Keputusan gaya hidup sehat paling tepat diambil setelah membaca komposisi tersebut adalah ....","membeli dalam jumlah banyak karena tartrazin merupakan sumber vitamin","membatasi konsumsinya atau memilih camilan alternatif tanpa pewarna dan pengawet sintetis","B","Pewarna dan pengawet sintetis sebaiknya dibatasi, dan memilih camilan alternatif mendukung gaya hidup sehat.","Sedang"],
+["Saat pulang sekolah, Budi diajak teman sebayanya mencoba merokok elektrik (vape) dan diejek penakut jika menolak. Tindakan asertif yang paling tepat dilakukan Budi untuk menghadapi tekanan teman sebaya tersebut adalah ....","menolak dengan tegas namun sopan sambil memberi alasan kesehatan, lalu segera pergi","diam saja dan menerima rokok tersebut tanpa menghisapnya agar tidak dianggap penakut","A","Penolakan tegas dan sopan dengan alasan kesehatan lalu menjauh adalah sikap asertif yang efektif.","Sedang"],
+["Program kampanye pencegahan zat adiktif di sekolah: (1) Memasang poster bahaya narkoba hanya di ruang guru; (2) Seminar interaktif menghadirkan mantan pecandu dan dokter; (3) Membentuk kader remaja anti-narkoba dari OSIS dan ekstrakurikuler; (4) Memberikan hukuman fisik berat tanpa pendampingan psikologis. Langkah paling efektif mencegah penyalahgunaan zat adiktif di kalangan pelajar adalah nomor ....","1 dan 4","2 dan 3","B","Kampanye efektif melibatkan siswa dan pakar secara interaktif; poster terbatas dan hukuman fisik tidak efektif.","Sulit"]
+];
+function defBank(){return RAW.map((r,i)=>({id:i+1,jenis:'Pilihan A-B',pertanyaan:r[0],a:r[1],b:r[2],kunci:r[3],pembahasan:r[4],kesulitan:r[5],aktif:i<10}));}
+
+/* ---------- State data ---------- */
+let cfg,bank,G={},stream=null,actx=null;
+function loadData(){
+  try{cfg=Object.assign({},DEF_CFG,JSON.parse(localStorage.getItem(KC)||'{}'))}catch(e){cfg=Object.assign({},DEF_CFG)}
+  try{bank=JSON.parse(localStorage.getItem(KB))}catch(e){bank=null}
+  if(!Array.isArray(bank)) bank=defBank();
+}
+function persist(){try{localStorage.setItem(KC,JSON.stringify(cfg));localStorage.setItem(KB,JSON.stringify(bank));}catch(e){}}
+const activeQs=()=>bank.filter(q=>q.aktif&&q.pertanyaan);
+
+/* ---------- Navigasi ---------- */
+function show(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));}
+function refreshHome(){
+  const n=activeQs().length;
+  $('#infoSoal').textContent=`Jumlah Soal : ${n} Soal`;
+  $('#infoWaktu').textContent=`Waktu Soal : ${cfg.waktu} Detik per soal`;
+  $('#infoJenjang').textContent=`${cfg.jenjang} • ${cfg.mapel}`;
+  $('#petunjukTxt').textContent=cfg.petunjuk;
+  $('#btnMulai').disabled=n<1;
+  $('#warnSoal').classList.toggle('hidden',n>=1);
+}
+
+/* ---------- Layar penuh ---------- */
+const ICON_MAX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+const ICON_MIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function toggleFS(){
+  if(isFS()){
+    const p=(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    if(p&&p.catch)p.catch(()=>{});
+  }else{
+    const el=document.documentElement;
+    const r=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(r){const p=r.call(el);if(p&&p.catch)p.catch(()=>{});}
+  }
+}
+function fsSync(){
+  $('#btnFS').innerHTML=isFS()?ICON_MIN+'<span>Keluar Layar Penuh</span>':ICON_MAX+'<span>Layar Penuh</span>';
+}
+
+/* ---------- Kamera (WebRTC getUserMedia) ---------- */
+async function startCam(){
+  if(stream) return true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    camStatus('Browser ini tidak mendukung kamera. Gunakan Chrome atau Edge versi terbaru.');return false;
+  }
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    document.querySelectorAll('video').forEach(v=>{v.srcObject=stream;const p=v.play();if(p&&p.catch)p.catch(()=>{});});
+    camStatus('');return true;
+  }catch(e){
+    camStatus('Kamera tidak bisa diakses. Periksa izin kamera di browser, lalu muat ulang halaman.');return false;
+  }
+}
+function camStatus(msg){$('#camStatus').textContent=msg||'';}
+
+/* ---------- Audio sintetis (Web Audio API, offline) ---------- */
+function unlockAudio(){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+  }catch(e){}
+}
+function tone(f,d,type,when){
+  if(!actx)return;
+  const t=actx.currentTime+(when||0);
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g);g.connect(actx.destination);
+  o.start(t);o.stop(t+d+.05);
+}
+const SFX={
+  benar:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.3,'triangle',i*.1)),
+  salah:()=>{tone(220,.45,'sawtooth');tone(165,.5,'sawtooth',.2);},
+  skor:()=>{tone(880,.1,'square');tone(1320,.15,'square',.1);},
+  tick:()=>tone(700,.05,'sine')
+};
+
+/* ---------- Game ---------- */
+async function startGame(){
+  const qs=activeQs();
+  if(!qs.length)return;
+  unlockAudio();
+  const ok=await startCam();
+  $('#camOff').style.display=ok?'none':'flex';
+  G={qs,i:0,sc:[0,0],t:0,timer:null,tmo:null,phase:'q',awarded:0};
+  $('#lblG1').textContent=cfg.g1;
+  $('#lblG2').textContent=cfg.g2;
+  $('#addG1').textContent='+1';
+  $('#addG2').textContent='+1';
+  show('game');
+  $('#btnStop').classList.remove('hidden');
+  beginQ();
+}
+function beginQ(){
+  const q=G.qs[G.i];
+  G.phase='q';G.t=Number(cfg.waktu)||10;G.awarded=0;
+  $('#qNo').textContent=`Soal ${G.i+1} / ${G.qs.length}`;
+  $('#qText').textContent=q.pertanyaan;
+  $('#optA').textContent=`A. ${q.a}`;
+  $('#optB').textContent=`B. ${q.b}`;
+  $('#halfA').className='half hl';
+  $('#halfB').className='half hr';
+  $('#badge').className='badge';
+  $('#addG1').disabled=false;$('#addG2').disabled=false;
+  scoreUI();tLeftUI();
+  clearInterval(G.timer);
+  G.timer=setInterval(tick,1000);
+}
+function tick(){
+  G.t--;
+  tLeftUI();
+  if(G.t<=0){reveal();}else if(G.t<=3){SFX.tick();}
+}
+function tLeftUI(){
+  $('#tLeft').textContent=Math.max(G.t,0);
+  $('#timerBox').classList.toggle('warn',G.t<=3);
+}
+function reveal(){
+  clearInterval(G.timer);
+  G.phase='r';
+  const k=G.qs[G.i].kunci;
+  $('#halfA').classList.add(k==='A'?'ok':'bad');
+  $('#halfB').classList.add(k==='B'?'ok':'bad');
+  $('#badge').textContent=`JAWABAN ${k}`;
+  $('#badge').classList.add('show');
+  $('#addG1').disabled=true;$('#addG2').disabled=true;
+  if(G.awarded>0)SFX.benar();else SFX.salah();
+  G.tmo=setTimeout(()=>{
+    G.i++;
+    if(G.i>=G.qs.length)finish();else beginQ();
+  },3000);
+}
+function addPoint(g){
+  if(G.phase!=='q')return;
+  G.sc[g]++;G.awarded++;
+  scoreUI();SFX.skor();
+}
+function scoreUI(){
+  $('#sc1').textContent=G.sc[0];
+  $('#sc2').textContent=G.sc[1];
+}
+function stopGame(){
+  clearInterval(G.timer);clearTimeout(G.tmo);
+  G.phase='x';
+  $('#btnStop').classList.add('hidden');
+  refreshHome();
+  show('home');
+}
+function finish(){
+  clearInterval(G.timer);
+  G.phase='x';
+  $('#btnStop').classList.add('hidden');
+  $('#resG1').textContent=`${cfg.g1}: ${G.sc[0]} poin`;
+  $('#resG2').textContent=`${cfg.g2}: ${G.sc[1]} poin`;
+  $('#resWin').textContent=G.sc[0]>G.sc[1]?`🏆 Pemenang: ${cfg.g1}`:G.sc[1]>G.sc[0]?`🏆 Pemenang: ${cfg.g2}`:'Skor seri, hebat semua!';
+  SFX.skor();
+  show('result');
+}
+
+/* ---------- Pengaturan Guru ---------- */
+function openGuru(){
+  $('#modal').classList.remove('hidden');
+  tab('cfg');fillCfg();renderBank();hideForm();
+}
+function closeGuru(){
+  $('#modal').classList.add('hidden');
+  refreshHome();
+}
+function tab(t){
+  $('#pCfg').classList.toggle('hidden',t!=='cfg');
+  $('#pBank').classList.toggle('hidden',t!=='bank');
+  $('#tabCfg').classList.toggle('on',t==='cfg');
+  $('#tabBank').classList.toggle('on',t==='bank');
+}
+function fillCfg(){
+  $('#cJenjang').value=cfg.jenjang;
+  $('#cMapel').value=cfg.mapel;
+  $('#cG1').value=cfg.g1;
+  $('#cG2').value=cfg.g2;
+  $('#cWaktu').value=cfg.waktu;
+  $('#cPetunjuk').value=cfg.petunjuk;
+  $('#cfgMsg').textContent='';
+}
+function saveCfg(){
+  let w=parseInt($('#cWaktu').value,10);
+  if(!w||w<3)w=3;if(w>120)w=120;
+  cfg={
+    jenjang:$('#cJenjang').value.trim()||DEF_CFG.jenjang,
+    mapel:$('#cMapel').value.trim()||DEF_CFG.mapel,
+    g1:$('#cG1').value.trim()||'Kelompok 1',
+    g2:$('#cG2').value.trim()||'Kelompok 2',
+    waktu:w,
+    petunjuk:$('#cPetunjuk').value.trim()
+  };
+  $('#cWaktu').value=w;
+  persist();
+  $('#cfgMsg').textContent='Konfigurasi tersimpan.';
+}
+function renderBank(){
+  $('#bankList').innerHTML=bank.length?bank.map((q,i)=>`
+    <div class="row">
+      <input class="chk" type="checkbox" data-act="toggle" data-id="${q.id}" ${q.aktif?'checked':''} title="Aktifkan untuk game">
+      <div class="rtxt"><b>${i+1}.</b> ${esc(q.pertanyaan.slice(0,150))}${q.pertanyaan.length>150?'…':''}
+        <div class="meta">${esc(q.jenis)} • Kunci: ${esc(q.kunci)} • ${esc(q.kesulitan)}</div></div>
+      <button class="btn btn-blue btn-sm" data-act="edit" data-id="${q.id}">Edit</button>
+      <button class="btn btn-red btn-sm" data-act="del" data-id="${q.id}">Hapus</button>
+    </div>`).join(''):'<p>Bank soal kosong. Tambah soal baru atau pulihkan bank soal awal.</p>';
+  $('#bankCount').textContent=`${activeQs().length} aktif dari ${bank.length} soal`;
+}
+function showForm(q){
+  $('#formBox').classList.remove('hidden');
+  $('#fId').value=q?q.id:'';
+  $('#fJenis').value=q?q.jenis:'Pilihan A-B';
+  $('#fPer').value=q?q.pertanyaan:'';
+  $('#fA').value=q?q.a:'';
+  $('#fB').value=q?q.b:'';
+  $('#fKunci').value=q?q.kunci:'A';
+  $('#fLvl').value=q?q.kesulitan:'Sedang';
+  $('#fPem').value=q?q.pembahasan:'';
+  $('#fAktif').checked=q?q.aktif:true;
+  $('#formTitle').textContent=q?'Edit Soal':'Tambah Soal Baru';
+  $('#fPer').focus();
+}
+function hideForm(){$('#formBox').classList.add('hidden');}
+function saveForm(){
+  const per=$('#fPer').value.trim(),a=$('#fA').value.trim(),b=$('#fB').value.trim();
+  if(!per||!a||!b){alert('Pertanyaan, Pilihan A, dan Pilihan B wajib diisi.');return;}
+  const data={jenis:$('#fJenis').value,pertanyaan:per,a,b,kunci:$('#fKunci').value,kesulitan:$('#fLvl').value,pembahasan:$('#fPem').value.trim(),aktif:$('#fAktif').checked};
+  const id=$('#fId').value;
+  if(id){
+    const q=bank.find(x=>String(x.id)===id);
+    if(q)Object.assign(q,data);
+  }else{
+    const nid=bank.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
+    bank.push(Object.assign({id:nid},data));
+  }
+  persist();hideForm();renderBank();
+}
+
+/* ---------- Event wiring ---------- */
+$('#btnFS').onclick=toggleFS;
+document.addEventListener('fullscreenchange',fsSync);
+document.addEventListener('webkitfullscreenchange',fsSync);
+
+$('#btnMulai').onclick=startGame;
+$('#btnStop').onclick=stopGame;
+$('#btnKamera').onclick=async()=>{
+  const box=$('#previewBox');
+  if(box.classList.contains('hidden')){
+    unlockAudio();
+    box.classList.remove('hidden');
+    $('#btnKamera').querySelector('span').textContent='Tutup Uji Kamera';
+    await startCam();
+  }else{
+    box.classList.add('hidden');
+    $('#btnKamera').querySelector('span').textContent='Aktifkan / Uji Kamera';
+  }
+};
+$('#btnGuru').onclick=openGuru;
+$('#btnClose').onclick=closeGuru;
+$('#tabCfg').onclick=()=>tab('cfg');
+$('#tabBank').onclick=()=>{tab('bank');renderBank();};
+$('#btnSaveCfg').onclick=saveCfg;
+$('#btnTambah').onclick=()=>showForm(null);
+$('#btnBatal').onclick=hideForm;
+$('#btnSimpanSoal').onclick=saveForm;
+$('#fJenis').onchange=()=>{
+  if($('#fJenis').value==='Benar-Salah'){
+    if(!$('#fA').value.trim())$('#fA').value='Benar';
+    if(!$('#fB').value.trim())$('#fB').value='Salah';
+  }
+};
+$('#btnReset').onclick=()=>{
+  if(confirm('Kembalikan bank soal ke 35 soal awal dari PDF? Perubahan soal akan hilang.')){
+    bank=defBank();persist();renderBank();hideForm();
+  }
+};
+$('#bankList').addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(!b)return;
+  const q=bank.find(x=>String(x.id)===b.dataset.id);
+  if(!q)return;
+  if(b.dataset.act==='edit')showForm(q);
+  if(b.dataset.act==='del'&&confirm('Hapus soal ini dari bank?')){
+    bank=bank.filter(x=>x!==q);persist();renderBank();hideForm();
+  }
+});
+$('#bankList').addEventListener('change',e=>{
+  const c=e.target;
+  if(c.dataset.act==='toggle'){
+    const q=bank.find(x=>String(x.id)===c.dataset.id);
+    if(q){q.aktif=c.checked;persist();renderBank();}
+  }
+});
+$('#addG1').onclick=()=>addPoint(0);
+$('#addG2').onclick=()=>addPoint(1);
+$('#btnUlang').onclick=startGame;
+$('#btnBeranda').onclick=()=>{refreshHome();show('home');};
+
+/* ---------- Init ---------- */
+loadData();
+refreshHome();
+fsSync();
+show('home');
+</script>
+</body>
+</html>
